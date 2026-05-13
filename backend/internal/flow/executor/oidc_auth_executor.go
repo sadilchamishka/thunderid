@@ -192,6 +192,12 @@ func (o *oidcAuthExecutor) ProcessAuthFlowResponse(ctx *core.NodeContext,
 		}
 	}
 
+	if !validateFederatedIdentifierConsistency(ctx, basicResult) {
+		execResp.Status = common.ExecFailure
+		execResp.FailureReason = "Invalid federated user"
+		return nil
+	}
+
 	sub := basicResult.ExternalSub
 
 	if basicResult.IsAmbiguousUser {

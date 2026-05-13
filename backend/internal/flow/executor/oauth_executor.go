@@ -256,6 +256,17 @@ func (o *oAuthExecutor) ProcessAuthFlowResponse(ctx *core.NodeContext,
 		return errors.New("federated authentication failed")
 	}
 
+	if basicResult == nil {
+		logger.Error("authnProvider.AuthenticateUser returned nil result")
+		return errors.New("OAuth authentication failed")
+	}
+
+	if !validateFederatedIdentifierConsistency(ctx, basicResult) {
+		execResp.Status = common.ExecFailure
+		execResp.FailureReason = "Invalid federated user"
+		return nil
+	}
+
 	sub := basicResult.ExternalSub
 
 	if basicResult.IsAmbiguousUser {
