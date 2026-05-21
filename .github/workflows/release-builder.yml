@@ -486,7 +486,6 @@ jobs:
             --tag "${IMAGE_NAME}:latest" \
             --build-arg CERT_FILE=docker-certs/server.cert \
             --build-arg KEY_FILE=docker-certs/server.key \
-          #  --push \
             .
           
             echo "✅ Docker image pushed successfully!"
