@@ -64,7 +64,7 @@ jobs:
         uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
         with:
           fetch-depth: 0
-          token: ${{ secrets.THUNDER_AUTOMATION_BOT }}
+          token: ${{ secrets.GITHUB_TOKEN }}
           ref: ${{ env.RELEASE_BRANCH }}
 
       - name: 📝 Determine Release Version
@@ -1111,7 +1111,7 @@ jobs:
       - name: 📚 Trigger Deploy Documentation Workflow
         uses: actions/github-script@f28e40c7f34bde8b3046d885e986cb6290c5673b # v7
         with:
-          github-token: ${{ secrets.THUNDER_AUTOMATION_BOT }}
+          github-token: ${{ secrets.GITHUB_TOKEN }}
           script: |
             try {
               console.log('🔄 Triggering deploy-docs workflow...');
