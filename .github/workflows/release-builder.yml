@@ -461,7 +461,6 @@ jobs:
             --tag "${IMAGE_NAME}:latest" \
             --build-arg CERT_FILE=docker-certs/server.cert \
             --build-arg KEY_FILE=docker-certs/server.key \
-            --push \
             .
           
           echo "✅ Docker image pushed successfully!"
@@ -478,11 +477,11 @@ jobs:
 
           COMPOSE_IMAGE="ghcr.io/${OWNER_NAME}/${PRODUCT_NAME_LOWER}-quick-start"
 
-          docker compose -f install/quick-start/docker-compose.yml publish \
-            --resolve-image-digests -y "${COMPOSE_IMAGE}:${DOCKER_VERSION}"
+          # docker compose -f install/quick-start/docker-compose.yml publish \
+          #  --resolve-image-digests -y "${COMPOSE_IMAGE}:${DOCKER_VERSION}"
 
-          docker compose -f install/quick-start/docker-compose.yml publish \
-            --resolve-image-digests -y "${COMPOSE_IMAGE}:latest"
+          # docker compose -f install/quick-start/docker-compose.yml publish \
+          #  --resolve-image-digests -y "${COMPOSE_IMAGE}:latest"
 
           echo "✅ Docker Compose published successfully!"
           echo "📦 Available at: ${COMPOSE_IMAGE}:${DOCKER_VERSION}"
@@ -560,10 +559,10 @@ jobs:
           echo "${{ secrets.GITHUB_TOKEN }}" | helm registry login ghcr.io -u ${{ github.actor }} --password-stdin
           
           # Push the Helm chart to GHCR
-          helm push "target/dist/${CHART_NAME}-${CHART_VERSION}.tgz" "oci://${HELM_REGISTRY}/helm-charts"
+          # helm push "target/dist/${CHART_NAME}-${CHART_VERSION}.tgz" "oci://${HELM_REGISTRY}/helm-charts"
           
-          echo "✅ Helm chart pushed successfully!"
-          echo "📦 Helm chart available at: oci://${HELM_REGISTRY}/helm-charts"
+          # echo "✅ Helm chart pushed successfully!"
+          # echo "📦 Helm chart available at: oci://${HELM_REGISTRY}/helm-charts"
 
       - name: 📦 Package and Push OpenChoreo Helm Charts to GHCR
         run: |
@@ -585,8 +584,8 @@ jobs:
           helm package install/openchoreo/helm/charts/${PRODUCT_NAME_LOWER}-oc-componenttype \
             --version "${CHART_VERSION}" --app-version "${CHART_VERSION}" \
             --destination target/dist/openchoreo/
-          helm push "target/dist/openchoreo/${PRODUCT_NAME_LOWER}-oc-componenttype-${CHART_VERSION}.tgz" "oci://${HELM_REGISTRY}"
-          echo "✅ ${PRODUCT_NAME_LOWER}-oc-componenttype pushed to oci://${HELM_REGISTRY}"
+          # helm push "target/dist/openchoreo/${PRODUCT_NAME_LOWER}-oc-componenttype-${CHART_VERSION}.tgz" "oci://${HELM_REGISTRY}"
+          # echo "✅ ${PRODUCT_NAME_LOWER}-oc-componenttype pushed to oci://${HELM_REGISTRY}"
 
       - name: 📝 Calculate Next Version
         id: next_version
