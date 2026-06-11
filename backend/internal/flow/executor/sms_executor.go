@@ -69,7 +69,7 @@ func newSMSExecutor(flowFactory core.FlowFactoryInterface,
 // then renders the SMS body from a template and sends it.
 func (e *smsExecutor) Execute(ctx *core.NodeContext) (*common.ExecutorResponse, error) {
 	logger := e.logger.With(log.String(log.LoggerKeyExecutionID, ctx.ExecutionID))
-	logger.Debug("Executing SMS executor")
+	logger.DebugWithContext(ctx.Context, "Executing SMS executor")
 
 	execResp := &common.ExecutorResponse{
 		AdditionalData: make(map[string]string),
@@ -84,16 +84,17 @@ func (e *smsExecutor) Execute(ctx *core.NodeContext) (*common.ExecutorResponse, 
 
 	recipient := resolveRecipientMobile(ctx, phoneAttr)
 	if recipient == "" {
-		logger.Debug("SMS recipient not found in user inputs or runtime data")
+		logger.DebugWithContext(ctx.Context, "SMS recipient not found in user inputs or runtime data")
 		execResp.Status = common.ExecFailure
-		execResp.FailureReason = "SMS recipient is required"
+		execResp.Error = &ErrSMSRecipientMissing
 		return execResp, nil
 	}
 
 	if !isValidPhoneNumber(recipient) {
-		logger.Debug("SMS recipient is not a valid phone number", log.String("phoneAttr", phoneAttr))
+		logger.DebugWithContext(ctx.Context, "SMS recipient is not a valid phone number",
+			log.String("phoneAttr", phoneAttr))
 		execResp.Status = common.ExecFailure
-		execResp.FailureReason = "SMS recipient is not a valid phone number"
+		execResp.Error = &ErrSMSInvalidPhone
 		return execResp, nil
 	}
 
@@ -105,7 +106,7 @@ func (e *smsExecutor) Execute(ctx *core.NodeContext) (*common.ExecutorResponse, 
 	tmplProp, ok := ctx.NodeProperties[propertyKeySMSTemplate]
 	if !ok {
 		execResp.Status = common.ExecFailure
-		execResp.FailureReason = "SMS template is required"
+		execResp.Error = &ErrSMSTemplateMissing
 		return execResp, nil
 	}
 	tmplStr, ok := tmplProp.(string)
@@ -115,7 +116,7 @@ func (e *smsExecutor) Execute(ctx *core.NodeContext) (*common.ExecutorResponse, 
 	}
 	if tmplStr == "" {
 		execResp.Status = common.ExecFailure
-		execResp.FailureReason = "SMS template is required"
+		execResp.Error = &ErrSMSTemplateMissing
 		return execResp, nil
 	}
 	scenario := template.ScenarioType(tmplStr)
@@ -135,13 +136,13 @@ func (e *smsExecutor) Execute(ctx *core.NodeContext) (*common.ExecutorResponse, 
 	if notifSvcErr != nil {
 		if ctx.FlowType == common.FlowTypeUserOnboarding && notifSvcErr.Type == serviceerror.ClientErrorType {
 			execResp.Status = common.ExecFailure
-			execResp.FailureReason = "Notification configuration is wrong or not set."
+			execResp.Error = &ErrSMSProviderNotConfigured
 			return execResp, nil
 		}
 		return nil, fmt.Errorf("SMS send failed: %s", notifSvcErr.ErrorDescription)
 	}
 
-	logger.Debug("SMS sent successfully", log.MaskedString("recipient", recipient))
+	logger.DebugWithContext(ctx.Context, "SMS sent successfully", log.MaskedString("recipient", recipient))
 
 	execResp.AdditionalData[common.DataSMSSent] = dataValueTrue
 	execResp.Status = common.ExecComplete
@@ -158,25 +159,6 @@ func resolveRecipientMobile(ctx *core.NodeContext, phoneAttr string) string {
 		return mobile
 	}
 	return ""
-}
-
-// resolveInputIdentifierByType returns the identifier of the first input in ctx.NodeInputs
-// matching inputType, or fallback if none is found.
-func resolveInputIdentifierByType(ctx *core.NodeContext, inputType string, fallback string) string {
-	if input, ok := findInputByType(ctx.NodeInputs, inputType); ok {
-		return input.Identifier
-	}
-	return fallback
-}
-
-// findInputByType returns the first input in the given slice whose Type matches inputType.
-func findInputByType(inputs []common.Input, inputType string) (common.Input, bool) {
-	for _, input := range inputs {
-		if input.Type == inputType {
-			return input, true
-		}
-	}
-	return common.Input{}, false
 }
 
 // isValidPhoneNumber returns true if the given phone number matches an acceptable format.
