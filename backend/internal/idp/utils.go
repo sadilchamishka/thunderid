@@ -31,6 +31,9 @@ import (
 	sysutils "github.com/thunder-id/thunderid/internal/system/utils"
 )
 
+// subClaim is the OIDC subject identifier claim, which is always preserved during attribute mapping.
+const subClaim = "sub"
+
 // GetPropertyValue returns the plain-text value for the named property from the slice,
 // or an empty string if the property is absent or its value cannot be retrieved.
 func GetPropertyValue(properties []cmodels.Property, name string) string {
@@ -77,6 +80,10 @@ func GetAttributeMappings(idp *IDPDTO) []AttributeMapping {
 // ApplyAttributeMappings applies external→local attribute mappings to attrs, supporting dot-notation
 // source paths for nested claims. Unmapped attributes pass through; mapped values take precedence
 // on collision. Returns attrs unchanged when no mappings are configured.
+//
+// The "sub" claim is never consumed by a mapping: it always passes through under its original key in
+// addition to any attributes it is mapped to. This lets configurations such as sub→username and
+// sub→email yield sub, username, and email all carrying the subject value.
 func ApplyAttributeMappings(attrs map[string]interface{}, mappings []AttributeMapping) map[string]interface{} {
 	if len(mappings) == 0 {
 		return attrs
@@ -84,6 +91,9 @@ func ApplyAttributeMappings(attrs map[string]interface{}, mappings []AttributeMa
 
 	mappedSources := make(map[string]bool, len(mappings))
 	for _, m := range mappings {
+		if m.ExternalAttribute == subClaim {
+			continue
+		}
 		mappedSources[m.ExternalAttribute] = true
 	}
 
